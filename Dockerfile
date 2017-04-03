@@ -14,6 +14,9 @@ RUN echo "view    systemview    included   .1.3.6.1.2.1.25" >> /etc/snmp/snmpd.c
     echo "view    systemview    included   .1.3.6.1.4.1.2021" >> /etc/snmp/snmpd.conf && \
     echo "rouser  tivoli_vcs authnopriv" >> /etc/snmp/snmpd.conf && \
     echo "createUser tivoli_vcs MD5 "****" DES" >> /etc/snmp/snmpd.conf
+    
+RUN snmpd && \
+    sed -i /^createUser/d /etc/snmp/snmpd.conf
 
 EXPOSE 161
 
