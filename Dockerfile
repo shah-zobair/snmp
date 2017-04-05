@@ -1,5 +1,7 @@
 FROM lpe/rhel7
 
+MAINTAINER Shah Zobair <szobair@redhat.com>
+
 RUN echo "yum-master.example.com" > /etc/yum/vars/build_server && \
     echo "rhel7-latest" > /etc/yum/vars/buildtag && \
     echo "prod" > /etc/yum/vars/environment && \
