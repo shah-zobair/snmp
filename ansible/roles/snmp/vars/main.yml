@@ -1,0 +1,19 @@
+---
+
+rsyslog_settings:
+  - {regexp: '^\$imjournalRatelimitInterval',    line: '$imjournalRatelimitInterval 30' }
+  - {regexp: '^\$imjournalRatelimitBurst',       line: '$imjournalRatelimitBurst 30000' }
+  - {regexp: '^\$WorkDirectory',                 line: '$WorkDirectory /var/log/rsyslog' }
+  - {regexp: '^\$ActionQueueFileName',           line: '$ActionQueueFileName esclAuthQueue' }
+  - {regexp: '^\$ActionQueueSize',               line: '$ActionQueueSize 250000' }
+  - {regexp: '^\$ActionQueueDiscardSeverity',    line: '$ActionQueueDiscardSeverity 8' }
+  - {regexp: '^\$ActionQueueCheckpointInterval', line: '$ActionQueueCheckpointInterval 60' }
+  - {regexp: '^\$ActionQueueHighWaterMark',      line: '$ActionQueueHighWaterMark 200000' }
+  - {regexp: '^\$ActionQueueLowWaterMark',       line: '$ActionQueueLowWaterMark 100000' }
+  - {regexp: '^\$ActionQueueMaxDiskSpace',       line: '$ActionQueueMaxDiskSpace 350m' }
+  - {regexp: '^\$ActionQueueType',               line: '$ActionQueueType LinkedList' }
+  - {regexp: '^\$ActionQueueMaxFileSize',        line: '$ActionQueueMaxFileSize 32m' }
+  - {regexp: '^\$ActionQueueSaveOnShutdown',     line: '$ActionQueueSaveOnShutdown on' }
+  - {regexp: '^\$ActionResumeInterval',          line: '$ActionResumeInterval 5' }
+  - {regexp: '^\$ActionResumeRetryCount',        line: '$ActionResumeRetryCount -1' }
+  - {regexp: '^authpriv.info;auth.info',         line: 'authpriv.info;auth.info       @@ecsl-us.example.com:5514' }
