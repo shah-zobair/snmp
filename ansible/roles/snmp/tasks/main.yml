@@ -1,0 +1,100 @@
+---
+
+- name: Detecting Operating System
+  stat:
+    path: /run/ostree-booted
+  register: ostree_booted
+
+# Locally setup containerized facts for now
+- set_fact:
+    is_atomic: "{{ ostree_booted.stat.exists }}"
+- set_fact:
+    is_containerized: "{{ (is_atomic | bool) or (containerized | default(false) | bool) }}"
+
+- block:
+
+  - name: Check if snmp already running
+    shell: docker ps
+    register: docker_pre_ps
+    changed_when: false
+    ignore_errors: true
+    failed_when: false
+
+  - name: Check if snmp container was running and/or exited
+    shell: docker ps -a -f status=exited -f status=dead | grep snmp
+    register: docker_all_ps
+    changed_when: false
+    ignore_errors: true
+    failed_when: false
+
+  - name: Remove dead snmp container
+    shell: docker rm $(docker ps -a | grep snmp | cut -f1 -d " ")
+    when: '"snmp" in docker_all_ps.stdout'
+
+  - name: Pull the asa/snmp image
+    docker_image:
+      name: asa/snmp
+      pull: yes
+      state: present
+      cacert_path: no
+    changed_when: false
+
+  - name: Allow Port 161
+    shell: iptables -A OS_FIREWALL_ALLOW -p udp --dport 161 -j ACCEPT
+    when: '"snmp" not in docker_pre_ps.stdout and "snmp" not in docker_all_ps.stdout'
+
+  - name: Add port 161 into /etc/sysconfig/iptables
+    lineinfile:
+      dest: '/etc/sysconfig/iptables'
+      line: '-A OS_FIREWALL_ALLOW -p udp -j ACCEPT --dport 161'
+      insertbefore: 'COMMIT'
+    when: '"snmp" not in docker_pre_ps.stdout and "snmp" not in docker_all_ps.stdout'
+
+#  - name: Run snmp container
+#    shell: docker run --restart=always -it --name snmp --privileged --ipc=host --net=host --pid=host -e HOST=/host -e NAME=snmp -e IMAGE=snmp -v /run:/run -v /var/log:/var/log -v /etc/localtime:/etc/localtime -v /:/host -d asa/snmp tail -f /dev/null
+#    when: '"snmp" not in docker_pre_ps.stdout'
+
+  - name: Run snmp container if not running
+    docker_container:
+      name: snmp
+      image: asa/snmp
+      restart_policy: always
+      restart_retries: 3
+      recreate: yes
+      privileged: true
+      ipc_mode: host
+      network_mode: host
+      pid_mode: host
+      env:
+         HOST: /host
+         NAME: snmp
+         IMAGE: snmp
+      volumes:
+       - /run:/run
+       - /var/log:/var/log
+       - /etc/localtime:/etc/localtime
+       - /:/host
+      detach: yes
+      tty: true
+      state: started
+      command: tail -f /dev/null
+    when: '"snmp" not in docker_pre_ps.stdout'
+
+#  - name: Run Atomic install rhel7/rsyslog
+#    shell: atomic install rhel7/rsyslog
+#    register: atomic_install
+#    when: '"rsyslog" not in docker_pre_ps.stdout'
+
+#  - name: Atomic run rhel7/rsyslog
+#    shell: atomic run rhel7/rsyslog
+#    register: atomic_run
+#    when: '"rsyslog" not in docker_pre_ps.stdout'
+
+  - name: Get docker ps output
+    shell: docker ps
+    register: docker_ps
+    changed_when: false
+    ignore_errors: true
+    failed_when: '"snmp" not in docker_ps.stdout'
+
+  when: is_containerized | bool
